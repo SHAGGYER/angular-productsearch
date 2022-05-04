@@ -1,4 +1,26 @@
+<style>
+  .products {
+    list-style: none;
+    padding-left: 0;
+  }
+
+  .products li {
+    padding: 1rem;
+    border: 1px solid black;
+    margin: 0.25rem;
+  }
+</style>
+
 <p>product-search works!</p>
 
 <input type="text" id="type-ahead">
 <p id="output"></p>
+
+<ul class="products">
+  <li *ngFor="let content of this.shownData; let index = index">
+    {{ content.title }}
+  </li>
+</ul>
+
+<button (click)="onPreviousPage()">Previous Page</button>
+<button (click)="onNextPage()">Next Page</button>
