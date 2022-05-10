@@ -1,0 +1,4 @@
+::ng-deep .highlighted-text{
+  background-color: yellow;
+  display: inline;
+}

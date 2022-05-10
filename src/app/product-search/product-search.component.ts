@@ -1,14 +1,14 @@
 import { Component, OnInit } from '@angular/core';
-import {fromEvent, of, take} from 'rxjs';
+import {delay, exhaustMap, from, fromEvent, interval, mergeMap, Observable, of, take} from 'rxjs';
 import {
   debounceTime,
   distinctUntilChanged,
   map,
-  switchMap,
   tap
 } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
-import {SearchProductResponse} from "../../../products";
+import {Product, SearchProductResponse} from "../../../products";
+import {debounce} from 'lodash';
 
 @Component({
   selector: 'app-product-search',
@@ -17,62 +17,112 @@ import {SearchProductResponse} from "../../../products";
 })
 export class ProductSearchComponent implements OnInit {
 
-  private data: SearchProductResponse | undefined;
   constructor(private http: HttpClient) { }
+
+  private data: SearchProductResponse | undefined;
   public page: number = 1
-  public parsedData: any[] = []
-  private subscription: any = null;
-  public shownData: any[] = []
+  public parsedData: Product[] = []
+  public shownData: Product[] = []
+  public loading: boolean = false;
+  public loaded: boolean = false;
+  public searchText: string = "";
+  public maxPages: number = 0;
+  public nextDisabled: boolean = false;
+  public prevDisabled: boolean = true;
 
-  onNextPage(): void {
-    this.page++
-    this.onViewPage(this.parsedData)
-  }
+  public paginate(next: boolean) {
+    this.loading = true;
 
-  onPreviousPage(): void {
-    this.page--
-    this.onViewPage(this.parsedData)
-  }
+    if (next) {
 
-  onViewPage(data: any[]): void {
-    this.shownData = data.slice((this.page - 1) * 10, ((this.page - 1) * 10) + 10)
-  }
+      this.page++
 
-  getContinents = (keys: any) => {
-    if (!this.data) {
-      this.http.get<SearchProductResponse>("assets/products.json").subscribe(data => this.data = data)
+      this.onNextPage()
+
+      this.nextDisabled = this.page + 1 > this.maxPages;
+      this.prevDisabled = false
+    } else {
+
+      this.page--
+      this.onPreviousPage()
+
+      this.nextDisabled = this.page + 1 > this.maxPages;
+      this.prevDisabled = this.page - 1 === 0;
+
     }
 
-    if (this.data) {
-      const data = this.data.content!.filter((x) => (x.title.toLowerCase().indexOf(keys.toLowerCase().split(" ").reverse().join(" ")) > -1));
-      return data
-    }
+    console.log(this.page, this.maxPages)
 
-    return []
   }
 
-  requestProducts = (keys: any) => {
-    return of(this.getContinents(keys)).pipe(
-      tap(_ => console.log(`API CALL at ${new Date()}`))
-    );
+
+  public onNextPage = debounce(() =>
+  {
+    this.onViewPage()
+  }, 1000)
+
+  onPreviousPage = debounce(() => {
+    this.onViewPage()
+  }, 1000)
+
+  resetData(): void {
+    this.searchText = ""
+    this.shownData = []
+    this.page = 1
+  }
+
+  onViewPage(): void {
+    this.shownData = this.parsedData.slice((this.page - 1) * 10, ((this.page - 1) * 10) + 10)
+    this.loading = false;
+
+  }
+
+  getProducts(): Observable<SearchProductResponse> {
+    if (!this.loaded) {
+      this.loaded = true;
+      this.loading = true;
+      return this.http.get<SearchProductResponse>("assets/products.json")
+    }
+
+    return of(this.data)
   }
 
   loadItems = () => {
-    const element: any = document.getElementById('type-ahead')
-    const outputElement: any = document.getElementById('output')
+    const element: HTMLElement = document.getElementById('type-ahead')
 
-    this.subscription = fromEvent(element, 'keyup')
+    fromEvent(element, 'keyup')
       .pipe(
         debounceTime(200),
         map((e: any) => e.target.value),
         distinctUntilChanged(),
-        switchMap(this.requestProducts),
-        tap((c: any) => {
+        exhaustMap((keys: string) => this.getProducts().pipe(
+          map((data: SearchProductResponse) => {
+            this.data = data;
+            this.loading = false
+
+            const words = keys.toLowerCase().split(" ");
+
+            return data.content.filter((x) => {
+              const title = x.title.toLowerCase().split(" ");
+              for (let word of title) {
+                if (words.includes(word)) return true
+              }
+
+              if (x.title.toLowerCase().indexOf(keys.toLowerCase()) > -1) return true
+              else if (x.title.toLowerCase().indexOf(keys.toLowerCase().split(" ").reverse().join(" ")) > -1) return true
+
+              return false;
+            })
+
+          }),
+        )),
+        tap((data: Product[]) => {
           this.page = 1
-          this.parsedData = c
-          this.onViewPage(c)
-        })
-      )
+          this.maxPages = Math.ceil(data.length / 10)
+          this.parsedData = data
+          this.onViewPage()
+        }),
+  )
       .subscribe();
   }
 

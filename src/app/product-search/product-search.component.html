@@ -1,26 +1,24 @@
-<style>
-  .products {
-    list-style: none;
-    padding-left: 0;
-  }
+<article>
+  <h1>Product Search</h1>
 
-  .products li {
-    padding: 1rem;
-    border: 1px solid black;
-    margin: 0.25rem;
-  }
-</style>
+  <div style="display: flex" class="input-group">
+    <input type="text" [(ngModel)]="searchText" id="type-ahead" placeholder="Search here...">
+    <span class="close-btn" (click)="resetData()" *ngIf="shownData.length">x</span>
+  </div>
 
-<p>product-search works!</p>
 
-<input type="text" id="type-ahead">
-<p id="output"></p>
 
-<ul class="products">
-  <li *ngFor="let content of this.shownData; let index = index">
-    {{ content.title }}
-  </li>
-</ul>
+  <ul class="products" *ngIf="shownData.length">
+    <li *ngFor="let content of this.shownData; let index = index" [innerHTML]="content.title | highlighter:searchText:'partial'">
+    </li>
+  </ul>
 
-<button (click)="onPreviousPage()">Previous Page</button>
-<button (click)="onNextPage()">Next Page</button>
+
+  <div class="pagination" *ngIf="shownData.length">
+    <button [disabled]="prevDisabled" (click)="paginate(false)">Previous Page</button>
+    <button [disabled]="nextDisabled" (click)="paginate(true)">Next Page</button>
+    <div *ngIf="loading" class="loading">Loading...</div>
+    <div style="flex: 1"></div>
+    <span>(Page: {{ page }})</span>
+  </div>
+</article>

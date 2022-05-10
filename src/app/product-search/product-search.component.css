@@ -1,0 +1,64 @@
+h1 {
+  font-family: sans-serif;
+  font-weight: normal;
+  text-align: center;
+}
+
+.products {
+  list-style: none;
+  padding-left: 0;
+}
+
+.products li {
+  padding: 1rem;
+  border: 1px solid black;
+  margin-bottom: 0.5rem;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  border: 1px solid black;
+  background: white;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+input {
+  border: none;
+  width: 100%;
+  padding: 1rem 1rem;
+  outline: none;
+}
+
+article {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.input-group {
+  border: 1px solid black;
+  position: relative;
+  width: 100%;
+}
+
+.close-btn {
+  cursor: pointer;
+  position: absolute;
+  top: 15px;
+  right: 10px;
+  font-family: sans-serif;
+}
+
+.loading {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem
+}
