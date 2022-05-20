@@ -1,4 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
+import {temporaryAllocator} from "@angular/compiler/src/render3/view/util";
 
 @Pipe({
   name: 'highlighter'
@@ -7,10 +8,9 @@ export class HighlighterPipe implements PipeTransform {
 
   transform(value: any, args: any, type:string): unknown {
     if(!args) return value;
+    let tempValue: string = ""
 
-    console.log(args)
-    console.log(value)
-    const values = []
+    const values: string[] = []
 
     if(type==='full'){
       const re = new RegExp("\\b("+args+"\\b)", 'igm');
@@ -20,19 +20,19 @@ export class HighlighterPipe implements PipeTransform {
 
       const argsArray = args.toLowerCase().split(" ")
       for (let arg of argsArray) {
-        const includes = value.toLowerCase().split(" ").includes(arg)
+
+        const includes = value.toLowerCase().match(arg)
 
         if (includes && arg) {
           const re = new RegExp(arg, 'igm');
-          value = value.replace(re, '<span class="highlighted-text">$&</span>');
+          value = value.replace(re, '_$&_');
         }
 
       }
-
-      const re = new RegExp(args, 'igm');
-      value = value.replace(re, '<span class="highlighted-text">$&</span>');
-
     }
+
+    const regex = new RegExp(/_(.*?)_/, "igm")
+    value = value.replaceAll(regex, '<span class="highlighted-text">$1</span>')
 
     return value;
   }
